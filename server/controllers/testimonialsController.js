@@ -4,7 +4,7 @@ const testimonialsController = async (req, res) => {
   try {
     const testimonoilsAvailable = await testimonials.find();
     if (testimonoilsAvailable.length == 0) {
-      res.status(400).json({ message: "No testimonials found" });
+      res.status(400).json({ message: "No blogs found" });
     } else {
       res.status(200).json(testimonialsAvailable);
     }
