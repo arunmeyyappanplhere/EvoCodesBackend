@@ -5,6 +5,9 @@ const servicesController = require("../controllers/servicesController");
 const testAddServices = require("../controllers/testAddServices");
 const projectsController = require("../controllers/projectsController");
 const testimonialsController = require("../controllers/testimonialsController");
+const blogController = require("../controllers/blogController");
+const employeesController = require("../controllers/employeesController");
+const contactRequestsController = require("../controllers/employeesController");
 const route = express.Router();
 
 route.post("/contact", contactController);
@@ -12,6 +15,9 @@ route.get("/", landingController);
 route.get("/services", servicesController);
 route.get("/projects", projectsController);
 route.get("/testimonoals", testimonialsController);
+route.get("/blogs", testimonialsController);
+route.get("/employees", employeesController);
+route.get("/contactrequests", contactRequestsController);
 
 // route.post("/AddTest", testAddServices);
 
