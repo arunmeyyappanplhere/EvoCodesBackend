@@ -8,7 +8,13 @@ const {
   deleteService,
 } = require("../controllers/servicesController");
 const projectsController = require("../controllers/projectsController");
-const testimonialsController = require("../controllers/testimonialsController");
+const {
+  getTestimonials,
+  addTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+  getTestimonialStats,
+} = require("../controllers/testimonialsController");
 const blogController = require("../controllers/blogController");
 const {
   getEmployees,
@@ -23,6 +29,13 @@ const {
   deleteClient,
 } = require("../controllers/clientsController");
 const { registerAdmin, loginAdmin } = require("../controllers/authController");
+const {
+  getAdmins,
+  addAdmin,
+  updateAdmin,
+  deleteAdmin,
+  getAdminStats,
+} = require("../controllers/adminController");
 
 const route = express.Router();
 
@@ -40,7 +53,7 @@ route.put("/services/:serviceID", updateService);
 route.delete("/services/:serviceID", deleteService);
 
 route.get("/projects", projectsController);
-route.get("/testimonoals", testimonialsController);
+route.get("/testimonials", testimonialsController);
 route.get("/blogs", blogController);
 
 // Employees
@@ -54,5 +67,19 @@ route.get("/clients", getClients);
 route.post("/clients", addClient);
 route.put("/clients/:clientID", updateClient);
 route.delete("/clients/:clientID", deleteClient);
+
+// Testimonials
+route.get("/testimonials", getTestimonials);
+route.post("/testimonials", addTestimonial);
+route.put("/testimonials/:testimonialId", updateTestimonial);
+route.delete("/testimonials/:testimonialId", deleteTestimonial);
+route.get("/testimonials/stats", getTestimonialStats);
+
+// Admins
+route.get("/admins", getAdmins);
+route.post("/admins", addAdmin);
+route.put("/admins/:adminId", updateAdmin);
+route.delete("/admins/:adminId", deleteAdmin);
+route.get("/admins/stats", getAdminStats);
 
 module.exports = route;
