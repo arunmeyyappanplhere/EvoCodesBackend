@@ -22,11 +22,16 @@ const {
   updateClient,
   deleteClient,
 } = require("../controllers/clientsController");
+const { registerAdmin, loginAdmin } = require("../controllers/authController");
 
 const route = express.Router();
 
 route.post("/contact", contactController);
 route.get("/", landingController);
+
+// Auth
+route.post("/register", registerAdmin);
+route.post("/login", loginAdmin);
 
 // Services
 route.get("/services", getServices);
