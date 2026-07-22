@@ -36,7 +36,7 @@ const {
   getAdminStats,
 } = require("../controllers/adminController");
 
-const {addProject,editProject,deleteProject}= require('../controllers/projectsController')
+const {addProject,editProject,deleteProject,getProjects}= require('../controllers/projectsController')
 
 
 const route = express.Router(); 
@@ -54,7 +54,7 @@ route.post("/services", addService);
 route.put("/services/:serviceID", updateService);
 route.delete("/services/:serviceID", deleteService);
 
-route.get("/projects", projectsController);
+route.get("/projects", getProjects);
 route.get("/testimonials", getTestimonials);
 route.get("/blogs", blogController);
                       
