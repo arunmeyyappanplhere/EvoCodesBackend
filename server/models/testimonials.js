@@ -9,6 +9,17 @@ const testimonialModel = new mongoose.Schema({
         type : String,
         require : true
     },
+
+    testimonialCompany:{
+        type:String,
+        default:""
+    },
+
+    testimonialProject:{
+        type:String,
+        default:""
+    },
+
     testimonialQuote : {
         type : String,
         require : true,
@@ -17,6 +28,15 @@ const testimonialModel = new mongoose.Schema({
         type : String,
         require : true
     },
+    testimonialStatus:{
+        type:String,
+        enum:["Published","Pending Review","Archived"],
+        default:"Pending Review"
+    }
+
+},
+{
+    timestamps:true
 });
 
 module.exports = mongoose.model("testimonials" , testimonialModel);
