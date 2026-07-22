@@ -53,7 +53,7 @@ route.put("/services/:serviceID", updateService);
 route.delete("/services/:serviceID", deleteService);
 
 route.get("/projects", projectsController);
-route.get("/testimonials", testimonialsController);
+route.get("/testimonials", getTestimonials);
 route.get("/blogs", blogController);
 
 // Employees
