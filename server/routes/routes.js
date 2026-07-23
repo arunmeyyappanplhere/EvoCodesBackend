@@ -41,7 +41,6 @@ const {addProject,editProject,deleteProject,getProjects}= require('../controller
 const {addContactRequest,updateContactRequest,deleteContactRequest}= require('../controllers/contactRequestsController')
 const route = express.Router(); 
 
-route.post("/contact", contactController);
 route.get("/", landingController);
 
 // Auth
@@ -86,8 +85,8 @@ route.get("/admins/stats", getAdminStats);
 
 // projects
 route.post("/projects",addProject)
-route.put("/projects/:id",editProject)
-route.delete("/projects/:id",deleteProject)
+route.put("/projects/:projectID",editProject)
+route.delete("/projects/:projectID",deleteProject)
 
 //contactsForEvoCodes
 route.get("/contact",getContact)
@@ -95,6 +94,7 @@ route.get("/contact",getContact)
 //contact for evo codes admin
 
 route.post('/contact',addContactRequest)
-route.put('/contact',updateContactRequest)
-route.delete('/contact',deleteContactRequest)
+route.put('/contact/:contactRequestId',updateContactRequest)
+route.delete('/contact/:contactRequestId',deleteContactRequest)
+
 module.exports = route;

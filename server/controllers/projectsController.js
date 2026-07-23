@@ -2,19 +2,17 @@ const projects = require("../models/projects");
 
 const addProject= (req,res)=>{
   try{
-      const{ id,name,coverImg,desc,sectors,siteLinks } = req.body
+      const{  projectName ,    projectID ,     projectCoverImg ,
+        projectDesc ,     projectSectors,        projectSiteLink ,
+       } = req.body
 
-      if( !name || !id || !desc || !sectors || !coverImg || !siteLinks ){
+      if( !projectName || !projectID || !projectCoverImg || !projectDesc || !projectSectors || !projectSiteLink ){
           return res.status(404).json({error: "both id and name are required"})
       }
 
       const newProject = new projects( {
-        projectName : name,
-        projectID : id  , 
-        projectCoverImg : coverImg ,
-        projectDesc : desc ,
-        projectSectors : sectors ,
-        projectSiteLink : siteLinks,
+        projectName ,    projectID ,     projectCoverImg ,
+        projectDesc ,     projectSectors,        projectSiteLink ,
       })
 
       newProject.save()
@@ -40,33 +38,34 @@ const getProjects = async(req,res) =>{
         res.status(500).json({ error : "Internal Server Error"});
     }
 };
-const editProject= (req,res)=>{
+const editProject= async (req,res)=>{
 try{
-  const projectId= req.params.id
-  const { name, coverImg, desc, sectors, siteLinks } = req.body
+  const projectId= req.params.projectID
+  const { projectName, projectCoverImg, projectDesc, projectSectors, projectSiteLink } = req.body
 
-  const projectMatch = projects.find(p => p.id === projectId )
-
+  const projectMatch = await projects.findOne({ projectID : projectId })
   if( !projectMatch ){
         return res.status(404).json({error : "match not found"})
   }
-  if( name !== undefined ){
-        projectMatch.name = name
+  if( projectName !== undefined ){
+        projectMatch.projectName = projectName
   }
-  if( coverImg !== undefined ){
-        projectMatch.coverImg = coverImg
+  if( projectCoverImg !== undefined ){
+        projectMatch.projectCoverImg = projectCoverImg
   }
-  if( desc !== undefined ){
-        projectMatch.desc = desc
+  if( projectDesc !== undefined ){
+        projectMatch.projectDesc = projectDesc
   }
-  if( sectors !== undefined ){
-        projectMatch.sectors = sectors
+  if( projectSectors !== undefined ){
+        projectMatch.projectSectors = projectSectors
   }
-  if( siteLinks !== undefined ){
-        projectMatch.siteLinks = siteLinks
+  if( projectSiteLink !== undefined ){
+        projectMatch.projectSiteLink = projectSiteLink
   }
 
-  return res.status(201).json({
+  await projectMatch.save()
+
+  return res.status(200).json({
     message: "updated successfully",
     data: projectMatch
   })
@@ -76,21 +75,18 @@ try{
 
 }
 
-const deleteProject = (req,res)=>{
+const deleteProject = async (req,res)=>{
       try{
-      const projectId = req.params.id
-      const projectMatchIndex = projects.findIndex( p => p.id === projectId )
+      const projectId = req.params.projectID
+      const deletedProject = await projects.findOneAndDelete({ projectID: projectId })
 
-      if (projectMatchIndex === -1 ){
-        return res.json({error : "project not found"})
+      if (!deletedProject) {
+        return res.status(404).json({error : "project not found"})
       }
-      
-      const [ deletedProjects ] = projects.splice(projectMatchIndex, 1)
-
 
       res.json({
         message: "the project deleted successfully",
-        data: deletedProjects
+        data: deletedProject
       })
       }catch(error) {
         res.status(500).json({ error : "Internal Server Error"});
