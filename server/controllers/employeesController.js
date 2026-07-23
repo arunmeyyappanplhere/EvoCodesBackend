@@ -1,4 +1,5 @@
 const employees = require("../models/employees");
+const cloudinary = require("./../config/cloudinary");
 
 // GET all employees
 const getEmployees = async (req, res) => {
@@ -19,13 +20,22 @@ const addEmployee = async (req, res) => {
   try {
     const {
       employeeId,
-      employeeImage,
       employeeName,
       employeePosition,
       employeeDepartment,
       employeeEmail,
       employeeStatus,
     } = req.body;
+
+    let employeeImage = "";
+    
+    // Upload image to Cloudinary if file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/employees",
+      });
+      employeeImage = result.secure_url;
+    }
 
     const newEmployee = new employees({
       employeeId,
@@ -40,6 +50,7 @@ const addEmployee = async (req, res) => {
     await newEmployee.save();
     res.status(201).json(newEmployee);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -48,9 +59,19 @@ const addEmployee = async (req, res) => {
 const updateEmployee = async (req, res) => {
   try {
     const { employeeId } = req.params;
+    const updateData = { ...req.body };
+
+    // Upload new image to Cloudinary if file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/employees",
+      });
+      updateData.employeeImage = result.secure_url;
+    }
+
     const updatedEmployee = await employees.findOneAndUpdate(
       { employeeId },
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -60,6 +81,7 @@ const updateEmployee = async (req, res) => {
       res.status(200).json(updatedEmployee);
     }
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

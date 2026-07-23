@@ -1,4 +1,5 @@
 const services = require("../models/services");
+const cloudinary = require("./../config/cloudinary");
 
 // GET all services
 const getServices = async (req, res) => {
@@ -16,15 +17,26 @@ const getServices = async (req, res) => {
 
 // POST - add a new service
 const addService = async (req, res) => {
+  console.log("Add service HIT")
   try {
     const {
       serviceID,
       serviceName,
       serviceHead,
       serviceDescription,
-      serviceIcon,
+      serviceColor,
       serviceTechStacks,
     } = req.body;
+
+    let serviceIcon = "";
+    
+    // Upload icon to Cloudinary if file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/services",
+      });
+      serviceIcon = result.secure_url;
+    }
 
     const newService = new services({
       serviceID,
@@ -32,12 +44,14 @@ const addService = async (req, res) => {
       serviceHead,
       serviceDescription,
       serviceIcon,
+      serviceColor,
       serviceTechStacks,
     });
 
     await newService.save();
     res.status(201).json(newService);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -46,9 +60,19 @@ const addService = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const { serviceID } = req.params;
+    const updateData = { ...req.body };
+
+    // Upload new icon to Cloudinary if file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/services",
+      });
+      updateData.serviceIcon = result.secure_url;
+    }
+
     const updatedService = await services.findOneAndUpdate(
       { serviceID },
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -58,6 +82,7 @@ const updateService = async (req, res) => {
       res.status(200).json(updatedService);
     }
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -71,7 +96,9 @@ const deleteService = async (req, res) => {
     if (!deletedService) {
       res.status(404).json({ message: "Service Not Found !!" });
     } else {
-      res.status(200).json({ message: "Service Deleted Successfully", deletedService });
+      res
+        .status(200)
+        .json({ message: "Service Deleted Successfully", deletedService });
     }
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });

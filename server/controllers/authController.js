@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const admins = require("../models/admins");
+const cloudinary = require("./../config/cloudinary");
 
 // Generates the next sequential ECA user ID, e.g. ECA01, ECA02, ...
 const generateUserID = async () => {
@@ -28,6 +29,14 @@ const sanitize = (admin) => {
   return rest;
 };
 
+// Shared cookie settings so login/register/logout all stay consistent
+const cookieOptions = () => ({
+  httpOnly: true, // JS on the frontend can never read this cookie
+  secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, matches JWT expiry
+});
+
 // POST - register a new admin account
 const registerAdmin = async (req, res) => {
   try {
@@ -39,7 +48,6 @@ const registerAdmin = async (req, res) => {
       reEnterPassword,
       dateOfBirth,
       role,
-      image,
       companyCode,
     } = req.body;
 
@@ -50,7 +58,6 @@ const registerAdmin = async (req, res) => {
       !password ||
       !dateOfBirth ||
       !role ||
-      !image ||
       !companyCode
     ) {
       return res.status(400).json({ message: "All fields are required !!" });
@@ -72,6 +79,16 @@ const registerAdmin = async (req, res) => {
     const userID = await generateUserID();
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    let image = "";
+    
+    // Upload image to Cloudinary if file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/admins",
+      });
+      image = result.secure_url;
+    }
+
     const newAdmin = new admins({
       userID,
       email,
@@ -87,13 +104,14 @@ const registerAdmin = async (req, res) => {
     await newAdmin.save();
 
     const token = signToken(newAdmin);
+    res.cookie("token", token, cookieOptions());
 
     res.status(201).json({
       message: "Admin account created successfully",
-      token,
       admin: sanitize(newAdmin),
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -121,10 +139,10 @@ const loginAdmin = async (req, res) => {
     }
 
     const token = signToken(admin);
+    res.cookie("token", token, cookieOptions());
 
     res.status(200).json({
       message: "Login successful",
-      token,
       admin: sanitize(admin),
     });
   } catch (error) {
@@ -132,4 +150,25 @@ const loginAdmin = async (req, res) => {
   }
 };
 
-module.exports = { registerAdmin, loginAdmin };
+// GET - returns the currently logged-in admin based on the cookie.
+// Called on app load so the frontend can restore the session after a refresh
+// (it can no longer read the token itself since the cookie is httpOnly).
+const getMe = async (req, res) => {
+  try {
+    const admin = await admins.findById(req.admin.id);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin Not Found !!" });
+    }
+    res.status(200).json({ admin: sanitize(admin) });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// POST - clears the auth cookie
+const logoutAdmin = (req, res) => {
+  res.clearCookie("token", cookieOptions());
+  res.status(200).json({ message: "Logged out successfully" });
+};
+
+module.exports = { registerAdmin, loginAdmin, getMe, logoutAdmin };
