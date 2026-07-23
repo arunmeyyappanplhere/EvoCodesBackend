@@ -3,31 +3,31 @@ const mongoose = require("mongoose");
 const contactRequestModel = new mongoose.Schema({
     contactRequestId :{
         type : String,
-        require : true
+        required : true
     },
     contactRequestSenderName : {
         type : String,
-        require : true
+        required : true
     },
     contactRequestEmail : {
         type : String,
-        require : true
+        required : true
     },
     contactRequestSubject : {
         type : String,
-        require : true,
+        required : true,
     },
     contactRequestDesc : {
         type: String,
-        require: true,
+        required: true,
     },
     contactRequestDate : {
         type : String,
-        require : true
+        required : true
     },
     contactRequestStatus : {
         type : Array,
-        require : true
+        required : true
     }
 },
     {

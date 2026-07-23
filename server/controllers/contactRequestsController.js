@@ -47,7 +47,7 @@ const addContactRequest = async (req, res) => {
       contactRequestStatus: contactRequestStatus || ["Pending"],
     });
 
-    return res.status(201).json({
+    return res.status(201).json({ 
       message: "Contact request created successfully",
       data: newContactRequest,
     });
@@ -55,18 +55,23 @@ const addContactRequest = async (req, res) => {
     return res.status(500).json({ error: error.message || "Internal Server Error" });
   }
 };
-
 const updateContactRequest = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { contactRequestId } = req.params;
+
     const updatedRequest = await contactrequests.findOneAndUpdate(
-      { contactRequestId: id },
+      { contactRequestId: contactRequestId }, // or simply { contactRequestId }
       req.body,
-      { new: true, runValidators: true }
+      {
+        new: true,
+        runValidators: true,
+      }
     );
 
     if (!updatedRequest) {
-      return res.status(404).json({ error: "Contact request not found" });
+      return res.status(404).json({
+        error: "Contact request not found",
+      });
     }
 
     return res.status(200).json({
@@ -74,16 +79,17 @@ const updateContactRequest = async (req, res) => {
       data: updatedRequest,
     });
   } catch (error) {
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 };
-
 const deleteContactRequest = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { contactRequestId } = req.params;
 
     const deletedRequest = await contactrequests.findOneAndDelete({
-      contactRequestId: id,
+      contactRequestId
     });
 
     if (!deletedRequest) {

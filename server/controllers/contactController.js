@@ -1,28 +1,49 @@
 const contactrequests = require("../models/contactrequests");
 
-const getContact = async (req,res) =>{
-    try{
-        const {name,email,sub,desc} = req.body
+const addContact = async (req, res) => {
+    try {
 
-        if(!name|| !email|| !sub|| !desc){
-                return res.status(404).json({error: "details not found"})
+        const {
+            contactRequestId,
+            contactRequestSenderName,
+            contactRequestEmail,
+            contactRequestSubject,
+            contactRequestDesc,
+            contactRequestDate,
+            contactRequestStatus
+        } = req.body;
+
+        if (
+            !contactRequestSenderName ||
+            !contactRequestEmail ||
+            !contactRequestSubject ||
+            !contactRequestDesc
+        ) {
+            return res.status(400).json({
+                error: "All fields are required"
+            });
         }
 
-        const newContact = await contactRequests.create({
-        contactRequestSenderName  :  email,
-         contactRequestEmail :  name,
-         contactRequestSubject :  sub,
-         contactRequestDesc :  desc
-        })
+        const newContact = await contactrequests.create({
+            contactRequestId,
+            contactRequestSenderName,
+            contactRequestEmail,
+            contactRequestSubject,
+            contactRequestDesc,
+            contactRequestDate,
+            contactRequestStatus
+        });
 
         return res.status(201).json({
-      message: "Contact form submitted successfully",
-      data: newContact,
-    });
-    
-    }catch(e){
-        return res.status(500).json({ error: "Server error. Please try again later." });
-    }
-}
+            message: "Contact created successfully",
+            data: newContact
+        });
 
-module.exports = getContact ;
+    } catch (err) {
+        return res.status(500).json({
+            error: err.message
+        });
+    }
+};
+
+module.exports = addContact;

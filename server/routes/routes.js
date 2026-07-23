@@ -46,7 +46,6 @@ const { getDashboardStats, getDepartmentDistribution } = require('../controllers
 const { getGrowthTrend, getServicesByStatus, getClientsByIndustry, getTopClientsByProjects } = require('../controllers/analyticsController')
 const route = express.Router(); 
 
-route.post("/contact", contactController);
 route.get("/", landingController);
 
 // Auth
@@ -93,8 +92,8 @@ route.get("/admins/stats", authMiddleware, getAdminStats);
 
 // projects (GET is public, writes are admin-only)
 route.post("/projects", authMiddleware, upload.single("coverImg"), addProject)
-route.put("/projects/:id", authMiddleware, upload.single("coverImg"), editProject)
-route.delete("/projects/:id", authMiddleware, deleteProject)
+route.put("/projects/:projectID", authMiddleware, upload.single("coverImg"), editProject)
+route.delete("/projects/:projectID", authMiddleware, deleteProject)
 
 //contactsForEvoCodes
 route.get("/contact",getContact)
@@ -102,10 +101,11 @@ route.get("/contact",getContact)
 //contact for evo codes admin
 
 route.post('/contact', authMiddleware, addContactRequest)
-route.put('/contact', authMiddleware, updateContactRequest)
-route.delete('/contact', authMiddleware, deleteContactRequest)
+route.put('/contact/:contactRequestId', authMiddleware, updateContactRequest)
+route.delete('/contact/:contactRequestId', authMiddleware, deleteContactRequest)
 
 route.post("/upload", authMiddleware, upload.single("image"), uploadController);
+
 
 // Dashboard routes
 route.get("/dashboard/stats", getDashboardStats);
