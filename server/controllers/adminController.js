@@ -1,4 +1,5 @@
 const Admin = require("../models/admins");
+const cloudinary = require("./../config/cloudinary");
 
 // Get All Admins
 const getAdmins = async (req, res) => {
@@ -24,9 +25,18 @@ const addAdmin = async (req, res) => {
       phoneNumber,
       dateOfBirth,
       role,
-      image,
       companyCode,
     } = req.body;
+
+    let image = "";
+    
+    // Upload image to Cloudinary if file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/admins",
+      });
+      image = result.secure_url;
+    }
 
     const newAdmin = new Admin({
       userID,
@@ -42,6 +52,7 @@ const addAdmin = async (req, res) => {
     res.status(201).json(newAdmin);
 
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -55,21 +66,29 @@ const updateAdmin = async (req, res) => {
       phoneNumber,
       dateOfBirth,
       role,
-      image,
       companyCode,
     } = req.body;
 
+    const updateData = {
+      email,
+      username,
+      phoneNumber,
+      dateOfBirth,
+      role,
+      companyCode,
+    };
+
+    // Upload new image to Cloudinary if file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/admins",
+      });
+      updateData.image = result.secure_url;
+    }
+
     const updatedAdmin = await Admin.findByIdAndUpdate(
       req.params.adminId,
-      {
-        email,
-        username,
-        phoneNumber,
-        dateOfBirth,
-        role,
-        image,
-        companyCode,
-      },
+      updateData,
       {
         new: true,
         runValidators: true,
@@ -81,6 +100,7 @@ const updateAdmin = async (req, res) => {
     res.status(200).json(updatedAdmin);
 
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

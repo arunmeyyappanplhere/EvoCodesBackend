@@ -1,4 +1,5 @@
 const express = require("express");
+const upload = require("../config/upload.js")
 const contactController = require("../controllers/contactController");
 const landingController = require("../controllers/landingController");
 const {
@@ -28,6 +29,7 @@ const {
   deleteClient,
 } = require("../controllers/clientsController");
 const { registerAdmin, loginAdmin } = require("../controllers/authController");
+const uploadController = require("../controllers/uploadController");
 const {
   getAdmins,
   addAdmin,
@@ -45,7 +47,7 @@ route.post("/contact", contactController);
 route.get("/", landingController);
 
 // Auth
-route.post("/register", registerAdmin);
+route.post("/register", upload.single("image"), registerAdmin);
 route.post("/login", loginAdmin);
 
 // Services
@@ -60,8 +62,8 @@ route.get("/blogs", blogController);
                       
 // Employees
 route.get("/employees", getEmployees);
-route.post("/employees", addEmployee);
-route.put("/employees/:employeeId", updateEmployee);
+route.post("/employees", upload.single("employeeImage"), addEmployee);
+route.put("/employees/:employeeId", upload.single("employeeImage"), updateEmployee);
 route.delete("/employees/:employeeId", deleteEmployee);
 
 // Clients
@@ -79,15 +81,15 @@ route.get("/testimonials/stats", getTestimonialStats);
 
 // Admins
 route.get("/admins", getAdmins);
-route.post("/admins", addAdmin);
-route.put("/admins/:adminId", updateAdmin);
+route.post("/admins", upload.single("image"), addAdmin);
+route.put("/admins/:adminId", upload.single("image"), updateAdmin);
 route.delete("/admins/:adminId", deleteAdmin);
 route.get("/admins/stats", getAdminStats);
 
 // projects
-route.post("/projects",addProject)
-route.put("/projects/:id",editProject)
-route.delete("/projects/:id",deleteProject)
+route.post("/projects", upload.single("coverImg"), addProject)
+route.put("/projects/:id", upload.single("coverImg"), editProject)
+route.delete("/projects/:id", deleteProject)
 
 //contactsForEvoCodes
 route.get("/contact",getContact)
@@ -97,4 +99,7 @@ route.get("/contact",getContact)
 route.post('/contact',addContactRequest)
 route.put('/contact',updateContactRequest)
 route.delete('/contact',deleteContactRequest)
+
+route.post("/upload", upload.single("image"), uploadController);
+
 module.exports = route;

@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const admins = require("../models/admins");
+const cloudinary = require("./../config/cloudinary");
 
 // Generates the next sequential ECA user ID, e.g. ECA01, ECA02, ...
 const generateUserID = async () => {
@@ -39,7 +40,6 @@ const registerAdmin = async (req, res) => {
       reEnterPassword,
       dateOfBirth,
       role,
-      image,
       companyCode,
     } = req.body;
 
@@ -50,7 +50,6 @@ const registerAdmin = async (req, res) => {
       !password ||
       !dateOfBirth ||
       !role ||
-      !image ||
       !companyCode
     ) {
       return res.status(400).json({ message: "All fields are required !!" });
@@ -71,6 +70,16 @@ const registerAdmin = async (req, res) => {
 
     const userID = await generateUserID();
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    let image = "";
+    
+    // Upload image to Cloudinary if file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/admins",
+      });
+      image = result.secure_url;
+    }
 
     const newAdmin = new admins({
       userID,
@@ -94,6 +103,7 @@ const registerAdmin = async (req, res) => {
       admin: sanitize(newAdmin),
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
