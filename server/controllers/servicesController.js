@@ -1,6 +1,29 @@
 const services = require("../models/services");
 const cloudinary = require("./../config/cloudinary");
 
+// Turn serviceTechStacks into a clean array no matter how it arrived
+// (a real array, a JSON string, or a comma-separated string).
+const normalizeTechStacks = (value) => {
+  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.map((v) => String(v).trim()).filter(Boolean);
+    } catch {
+      // not JSON, fall through to comma-split
+    }
+    return value.split(",").map((v) => v.trim()).filter(Boolean);
+  }
+  return [];
+};
+
+const slugify = (name = "") =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "service";
+
 // GET all services
 const getServices = async (req, res) => {
   try {
@@ -17,10 +40,8 @@ const getServices = async (req, res) => {
 
 // POST - add a new service
 const addService = async (req, res) => {
-  console.log("Add service HIT")
   try {
     const {
-      serviceID,
       serviceName,
       serviceHead,
       serviceDescription,
@@ -28,15 +49,23 @@ const addService = async (req, res) => {
       serviceTechStacks,
     } = req.body;
 
-    let serviceIcon = "";
-    
-    // Upload icon to Cloudinary if file is provided
+    // Icon is just a lucide-react icon name string by default (e.g. "Cloud").
+    let serviceIcon = req.body.serviceIcon || "";
+
+    // Optional legacy path: if an actual image file is uploaded, use that
+    // Cloudinary URL as the icon instead of the text name.
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "evocodes_uploads/services",
       });
       serviceIcon = result.secure_url;
     }
+
+    // Fall back to a generated ID if the client didn't send one.
+    const serviceID =
+      req.body.serviceID && req.body.serviceID.trim()
+        ? req.body.serviceID.trim()
+        : `${slugify(serviceName)}-${Date.now().toString(36)}`;
 
     const newService = new services({
       serviceID,
@@ -45,7 +74,7 @@ const addService = async (req, res) => {
       serviceDescription,
       serviceIcon,
       serviceColor,
-      serviceTechStacks,
+      serviceTechStacks: normalizeTechStacks(serviceTechStacks),
     });
 
     await newService.save();
@@ -62,7 +91,11 @@ const updateService = async (req, res) => {
     const { serviceID } = req.params;
     const updateData = { ...req.body };
 
-    // Upload new icon to Cloudinary if file is provided
+    if (updateData.serviceTechStacks !== undefined) {
+      updateData.serviceTechStacks = normalizeTechStacks(updateData.serviceTechStacks);
+    }
+
+    // Optional legacy path: replace the icon with an uploaded image if provided.
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "evocodes_uploads/services",

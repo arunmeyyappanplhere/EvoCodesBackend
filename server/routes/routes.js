@@ -15,7 +15,12 @@ const {
   deleteTestimonial,
   getTestimonialStats,
 } = require("../controllers/testimonialsController");
-const blogController = require("../controllers/blogController");
+const {
+  getBlogs,
+  addBlog,
+  updateBlog,
+  deleteBlog,
+} = require("../controllers/blogController");
 const {
   getEmployees,
   addEmployee,
@@ -62,7 +67,12 @@ route.delete("/services/:serviceID", authMiddleware, deleteService);
 
 route.get("/projects", getProjects);
 route.get("/testimonials", getTestimonials);
-route.get("/blogs", blogController);
+
+// Blogs (GET is public for the website, writes are admin-only)
+route.get("/blogs", getBlogs);
+route.post("/blogs", authMiddleware, upload.single("blogImage"), addBlog);
+route.put("/blogs/:blogID", authMiddleware, upload.single("blogImage"), updateBlog);
+route.delete("/blogs/:blogID", authMiddleware, deleteBlog);
                       
 // Employees (GET is public, writes are admin-only)
 route.get("/employees", getEmployees);
