@@ -1,7 +1,7 @@
 const projects = require("../models/projects");
 const cloudinary = require("./../config/cloudinary");
 
-const addProject= (req,res)=>{
+const addProject= async(req,res)=>{
   try{
       const{ id,name,coverImg,desc,sectors,siteLinks } = req.body
 
