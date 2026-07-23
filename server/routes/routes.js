@@ -28,7 +28,8 @@ const {
   updateClient,
   deleteClient,
 } = require("../controllers/clientsController");
-const { registerAdmin, loginAdmin } = require("../controllers/authController");
+const { registerAdmin, loginAdmin, getMe, logoutAdmin } = require("../controllers/authController");
+const authMiddleware = require("../controllers/authMiddleware");
 const uploadController = require("../controllers/uploadController");
 const {
   getAdmins,
@@ -49,57 +50,59 @@ route.get("/", landingController);
 // Auth
 route.post("/register", upload.single("image"), registerAdmin);
 route.post("/login", loginAdmin);
+route.post("/logout", logoutAdmin);
+route.get("/me", authMiddleware, getMe); // frontend calls this on load to restore the session from the cookie
 
-// Services
+// Services (GET is public for the website, writes are admin-only)
 route.get("/services", getServices);
-route.post("/services", addService);
-route.put("/services/:serviceID", updateService);
-route.delete("/services/:serviceID", deleteService);
+route.post("/services", authMiddleware, addService);
+route.put("/services/:serviceID", authMiddleware, updateService);
+route.delete("/services/:serviceID", authMiddleware, deleteService);
 
 route.get("/projects", getProjects);
 route.get("/testimonials", getTestimonials);
 route.get("/blogs", blogController);
                       
-// Employees
+// Employees (GET is public, writes are admin-only)
 route.get("/employees", getEmployees);
-route.post("/employees", upload.single("employeeImage"), addEmployee);
-route.put("/employees/:employeeId", upload.single("employeeImage"), updateEmployee);
-route.delete("/employees/:employeeId", deleteEmployee);
+route.post("/employees", authMiddleware, upload.single("employeeImage"), addEmployee);
+route.put("/employees/:employeeId", authMiddleware, upload.single("employeeImage"), updateEmployee);
+route.delete("/employees/:employeeId", authMiddleware, deleteEmployee);
 
-// Clients
+// Clients (GET is public, writes are admin-only)
 route.get("/clients", getClients);
-route.post("/clients", addClient);
-route.put("/clients/:clientID", updateClient);
-route.delete("/clients/:clientID", deleteClient);
+route.post("/clients", authMiddleware, addClient);
+route.put("/clients/:clientID", authMiddleware, updateClient);
+route.delete("/clients/:clientID", authMiddleware, deleteClient);
                                              
-// Testimonials
+// Testimonials (GET is public, writes + stats are admin-only)
 route.get("/testimonials", getTestimonials);
-route.post("/testimonials", addTestimonial);
-route.put("/testimonials/:testimonialId", updateTestimonial);
-route.delete("/testimonials/:testimonialId", deleteTestimonial);
-route.get("/testimonials/stats", getTestimonialStats);
+route.post("/testimonials", authMiddleware, addTestimonial);
+route.put("/testimonials/:testimonialId", authMiddleware, updateTestimonial);
+route.delete("/testimonials/:testimonialId", authMiddleware, deleteTestimonial);
+route.get("/testimonials/stats", authMiddleware, getTestimonialStats);
 
-// Admins
-route.get("/admins", getAdmins);
-route.post("/admins", upload.single("image"), addAdmin);
-route.put("/admins/:adminId", upload.single("image"), updateAdmin);
-route.delete("/admins/:adminId", deleteAdmin);
-route.get("/admins/stats", getAdminStats);
+// Admins (protected — requires a valid session cookie from /login)
+route.get("/admins", authMiddleware, getAdmins);
+route.post("/admins", authMiddleware, upload.single("image"), addAdmin);
+route.put("/admins/:adminId", authMiddleware, upload.single("image"), updateAdmin);
+route.delete("/admins/:adminId", authMiddleware, deleteAdmin);
+route.get("/admins/stats", authMiddleware, getAdminStats);
 
-// projects
-route.post("/projects", upload.single("coverImg"), addProject)
-route.put("/projects/:id", upload.single("coverImg"), editProject)
-route.delete("/projects/:id", deleteProject)
+// projects (GET is public, writes are admin-only)
+route.post("/projects", authMiddleware, upload.single("coverImg"), addProject)
+route.put("/projects/:id", authMiddleware, upload.single("coverImg"), editProject)
+route.delete("/projects/:id", authMiddleware, deleteProject)
 
 //contactsForEvoCodes
 route.get("/contact",getContact)
 
 //contact for evo codes admin
 
-route.post('/contact',addContactRequest)
-route.put('/contact',updateContactRequest)
-route.delete('/contact',deleteContactRequest)
+route.post('/contact', authMiddleware, addContactRequest)
+route.put('/contact', authMiddleware, updateContactRequest)
+route.delete('/contact', authMiddleware, deleteContactRequest)
 
-route.post("/upload", upload.single("image"), uploadController);
+route.post("/upload", authMiddleware, upload.single("image"), uploadController);
 
 module.exports = route;

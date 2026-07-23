@@ -36,7 +36,8 @@ const adminModel = new mongoose.Schema(
     },
     image: {
       type: String, // URL / path to the uploaded profile image
-      required: true,
+      required: false,
+      default: "",
     },
     companyCode: {
       type: String, // the invite code entered at registration
