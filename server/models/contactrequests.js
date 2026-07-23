@@ -17,6 +17,10 @@ const contactRequestModel = new mongoose.Schema({
         type : String,
         require : true,
     },
+    contactRequestDesc : {
+        type: String,
+        require: true,
+    },
     contactRequestDate : {
         type : String,
         require : true
@@ -24,7 +28,11 @@ const contactRequestModel = new mongoose.Schema({
     contactRequestStatus : {
         type : Array,
         require : true
-    },
-});
+    }
+},
+    {
+        timestamps: true
+    }
+);
 
 module.exports = mongoose.model("contactRequests" , contactRequestModel);

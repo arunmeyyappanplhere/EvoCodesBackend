@@ -36,9 +36,9 @@ const {
   getAdminStats,
 } = require("../controllers/adminController");
 
+const getContact = require ("../controllers/contactController")
 const {addProject,editProject,deleteProject,getProjects}= require('../controllers/projectsController')
-
-
+const {addContactRequest,updateContactRequest,deleteContactRequest}= require('../controllers/contactRequestsController')
 const route = express.Router(); 
 
 route.post("/contact", contactController);
@@ -89,4 +89,12 @@ route.post("/projects",addProject)
 route.put("/projects/:id",editProject)
 route.delete("/projects/:id",deleteProject)
 
+//contactsForEvoCodes
+route.get("/contact",getContact)
+
+//contact for evo codes admin
+
+route.post('/contact',addContactRequest)
+route.put('/contact',updateContactRequest)
+route.delete('/contact',deleteContactRequest)
 module.exports = route;

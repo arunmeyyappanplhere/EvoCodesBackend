@@ -1,28 +1,31 @@
 const projects = require("../models/projects");
 
 const addProject= (req,res)=>{
-  
+  try{
       const{ id,name,coverImg,desc,sectors,siteLinks } = req.body
 
       if( !name || !id || !desc || !sectors || !coverImg || !siteLinks ){
           return res.status(404).json({error: "both id and name are required"})
       }
 
-      const newProject = {
-        name,
-        id,
-        coverImg,
-        desc,
-        sectors,
-        siteLinks,
-      }
+      const newProject = new projects( {
+        projectName : name,
+        projectID : id  , 
+        projectCoverImg : coverImg ,
+        projectDesc : desc ,
+        projectSectors : sectors ,
+        projectSiteLink : siteLinks,
+      })
 
-      projects.push(newProject)
+      newProject.save()
 
       return res.status(201).json({
           message: "newProject added",
           data: newProject
       })
+  }catch(error) {
+        res.status(500).json({ error : "Internal Server Error"});
+    }
 }
 const getProjects = async(req,res) =>{
     try{
@@ -33,12 +36,12 @@ const getProjects = async(req,res) =>{
        else{
         res.status(200).json(projectsAvailable);
        }
-    } catch {
+    } catch(error) {
         res.status(500).json({ error : "Internal Server Error"});
     }
 };
 const editProject= (req,res)=>{
-
+try{
   const projectId= req.params.id
   const { name, coverImg, desc, sectors, siteLinks } = req.body
 
@@ -67,10 +70,14 @@ const editProject= (req,res)=>{
     message: "updated successfully",
     data: projectMatch
   })
+}catch(error) {
+        res.status(500).json({ error : "Internal Server Error"});
+    }
 
 }
 
 const deleteProject = (req,res)=>{
+      try{
       const projectId = req.params.id
       const projectMatchIndex = projects.findIndex( p => p.id === projectId )
 
@@ -85,7 +92,9 @@ const deleteProject = (req,res)=>{
         message: "the project deleted successfully",
         data: deletedProjects
       })
-
+      }catch(error) {
+        res.status(500).json({ error : "Internal Server Error"});
+    }
   }
 
 
