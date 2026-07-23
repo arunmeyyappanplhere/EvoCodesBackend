@@ -22,7 +22,7 @@ const employeeModel = new mongoose.Schema({
         require : true
     },
     employeeEmail : {
-        type : Array,
+        type : String,
         require : true
     },
     employeeStatus : {

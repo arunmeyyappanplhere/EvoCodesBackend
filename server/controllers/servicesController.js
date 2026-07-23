@@ -16,6 +16,7 @@ const getServices = async (req, res) => {
 
 // POST - add a new service
 const addService = async (req, res) => {
+  console.log("Add service HIT")
   try {
     const {
       serviceID,
@@ -23,6 +24,7 @@ const addService = async (req, res) => {
       serviceHead,
       serviceDescription,
       serviceIcon,
+      serviceColor,
       serviceTechStacks,
     } = req.body;
 
@@ -32,6 +34,7 @@ const addService = async (req, res) => {
       serviceHead,
       serviceDescription,
       serviceIcon,
+      serviceColor,
       serviceTechStacks,
     });
 
@@ -49,7 +52,7 @@ const updateService = async (req, res) => {
     const updatedService = await services.findOneAndUpdate(
       { serviceID },
       req.body,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updatedService) {
@@ -71,7 +74,9 @@ const deleteService = async (req, res) => {
     if (!deletedService) {
       res.status(404).json({ message: "Service Not Found !!" });
     } else {
-      res.status(200).json({ message: "Service Deleted Successfully", deletedService });
+      res
+        .status(200)
+        .json({ message: "Service Deleted Successfully", deletedService });
     }
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
