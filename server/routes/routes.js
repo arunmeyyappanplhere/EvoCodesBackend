@@ -42,6 +42,8 @@ const {
 const getContact = require ("../controllers/contactController")
 const {addProject,editProject,deleteProject,getProjects}= require('../controllers/projectsController')
 const {addContactRequest,updateContactRequest,deleteContactRequest}= require('../controllers/contactRequestsController')
+const { getDashboardStats, getDepartmentDistribution } = require('../controllers/dashboardController')
+const { getGrowthTrend, getServicesByStatus, getClientsByIndustry, getTopClientsByProjects } = require('../controllers/analyticsController')
 const route = express.Router(); 
 
 route.post("/contact", contactController);
@@ -104,5 +106,15 @@ route.put('/contact', authMiddleware, updateContactRequest)
 route.delete('/contact', authMiddleware, deleteContactRequest)
 
 route.post("/upload", authMiddleware, upload.single("image"), uploadController);
+
+// Dashboard routes
+route.get("/dashboard/stats", getDashboardStats);
+route.get("/dashboard/departments", getDepartmentDistribution);
+
+// Analytics routes
+route.get("/analytics/growth-trend", getGrowthTrend);
+route.get("/analytics/services-status", getServicesByStatus);
+route.get("/analytics/clients-industry", getClientsByIndustry);
+route.get("/analytics/top-clients", getTopClientsByProjects);
 
 module.exports = route;
