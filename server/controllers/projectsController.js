@@ -1,103 +1,127 @@
 const projects = require("../models/projects");
 const cloudinary = require("./../config/cloudinary");
 
-const addProject= async(req,res)=>{
-  try{
-      const{ id,name,coverImg,desc,sectors,siteLinks } = req.body
+const slugify = (name = "") =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "project";
 
-      if( !name || !id || !desc || !sectors || !coverImg || !siteLinks ){
-          return res.status(404).json({error: "both id and name are required"})
-      }
+const normalizeSectors = (value) => {
+  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.map((v) => String(v).trim()).filter(Boolean);
+    } catch {
+      // not JSON, fall through
+    }
+    return value.split(",").map((v) => v.trim()).filter(Boolean);
+  }
+  return [];
+};
 
-      const newProject = new projects( {
-        projectName : name,
-        projectID : id  , 
-        projectCoverImg : coverImg ,
-        projectDesc : desc ,
-        projectSectors : sectors ,
-        projectSiteLink : siteLinks,
-      })
+// GET all projects
+const getProjects = async (req, res) => {
+  try {
+    const projectsAvailable = await projects.find();
+    if (projectsAvailable.length == 0) {
+      res.status(400).json({ message: "No Projects Found !!" });
+    } else {
+      res.status(200).json(projectsAvailable);
+    }
+  } catch {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// POST - add a new project
+const addProject = async (req, res) => {
+  try {
+    const { projectName, projectDesc, projectSectors, projectSiteLink } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ error: "A cover image (coverImg) is required." });
+    }
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "evocodes_uploads/projects",
+    });
+    const projectCoverImg = result.secure_url;
+
+    const projectID =
+      req.body.projectID && req.body.projectID.trim()
+        ? req.body.projectID.trim()
+        : `${slugify(projectName)}-${Date.now().toString(36)}`;
+
+    const newProject = new projects({
+      projectID,
+      projectName,
+      projectCoverImg,
+      projectDesc,
+      projectSectors: normalizeSectors(projectSectors),
+      projectSiteLink,
+    });
 
     await newProject.save();
-
-    return res.status(201).json({
-      message: "Project added successfully",
-      data: newProject,
-    });
+    res.status(201).json(newProject);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-const getProjects = async(req,res) =>{
-    try{
-       const projectsAvailable = await projects.find();
-       if (projectsAvailable.length == 0){
-        res.status(400).json({ message : "No Projects Found !!"});
-       }
-       else{
-        res.status(200).json(projectsAvailable);
-       }
-    } catch(error) {
-        res.status(500).json({ error : "Internal Server Error"});
+
+// PUT - update an existing project by projectID
+const editProject = async (req, res) => {
+  try {
+    const { projectID } = req.params;
+    const updateData = { ...req.body };
+
+    if (updateData.projectSectors !== undefined) {
+      updateData.projectSectors = normalizeSectors(updateData.projectSectors);
     }
+
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "evocodes_uploads/projects",
+      });
+      updateData.projectCoverImg = result.secure_url;
+    } else {
+      delete updateData.projectCoverImg;
+    }
+
+    const updatedProject = await projects.findOneAndUpdate(
+      { projectID },
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProject) {
+      res.status(404).json({ message: "Project Not Found !!" });
+    } else {
+      res.status(200).json(updatedProject);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
-const editProject= (req,res)=>{
-try{
-  const projectId= req.params.id
-  const { name, coverImg, desc, sectors, siteLinks } = req.body
 
-  const projectMatch = projects.find(p => p.id === projectId )
+// DELETE - remove a project by projectID
+const deleteProject = async (req, res) => {
+  try {
+    const { projectID } = req.params;
+    const deletedProject = await projects.findOneAndDelete({ projectID });
 
-  if( !projectMatch ){
-        return res.status(404).json({error : "match not found"})
-  }
-  if( name !== undefined ){
-        projectMatch.name = name
-  }
-  if( coverImg !== undefined ){
-        projectMatch.coverImg = coverImg
-  }
-  if( desc !== undefined ){
-        projectMatch.desc = desc
-  }
-  if( sectors !== undefined ){
-        projectMatch.sectors = sectors
-  }
-  if( siteLinks !== undefined ){
-        projectMatch.siteLinks = siteLinks
-  }
-
-  return res.status(201).json({
-    message: "updated successfully",
-    data: projectMatch
-  })
-}catch(error) {
-        res.status(500).json({ error : "Internal Server Error"});
+    if (!deletedProject) {
+      res.status(404).json({ message: "Project Not Found !!" });
+    } else {
+      res.status(200).json({ message: "Project Deleted Successfully", deletedProject });
     }
-
-}
-
-const deleteProject = (req,res)=>{
-      try{
-      const projectId = req.params.id
-      const projectMatchIndex = projects.findIndex( p => p.id === projectId )
-
-      if (projectMatchIndex === -1 ){
-        return res.json({error : "project not found"})
-      }
-      
-      const [ deletedProjects ] = projects.splice(projectMatchIndex, 1)
-
-
-      res.json({
-        message: "the project deleted successfully",
-        data: deletedProjects
-      })
-      }catch(error) {
-        res.status(500).json({ error : "Internal Server Error"});
-    }
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
   }
+};
 
-
-module.exports = {addProject,editProject,deleteProject ,getProjects};
+module.exports = { getProjects, addProject, editProject, deleteProject };

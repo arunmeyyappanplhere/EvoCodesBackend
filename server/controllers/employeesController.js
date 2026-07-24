@@ -1,6 +1,13 @@
 const employees = require("../models/employees");
 const cloudinary = require("./../config/cloudinary");
 
+const slugify = (name = "") =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "employee";
+
 // GET all employees
 const getEmployees = async (req, res) => {
   try {
@@ -18,24 +25,21 @@ const getEmployees = async (req, res) => {
 // POST - add a new employee
 const addEmployee = async (req, res) => {
   try {
-    const {
-      employeeId,
-      employeeName,
-      employeePosition,
-      employeeDepartment,
-      employeeEmail,
-      employeeStatus,
-    } = req.body;
+    const { employeeName, employeePosition, employeeDepartment, employeeEmail, employeeStatus } = req.body;
 
-    let employeeImage = "";
-    
-    // Upload image to Cloudinary if file is provided
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "evocodes_uploads/employees",
-      });
-      employeeImage = result.secure_url;
+    if (!req.file) {
+      return res.status(400).json({ error: "An employee photo (employeeImage) is required." });
     }
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "evocodes_uploads/employees",
+    });
+    const employeeImage = result.secure_url;
+
+    const employeeId =
+      req.body.employeeId && req.body.employeeId.trim()
+        ? req.body.employeeId.trim()
+        : `${slugify(employeeName)}-${Date.now().toString(36)}`;
 
     const newEmployee = new employees({
       employeeId,
@@ -61,12 +65,13 @@ const updateEmployee = async (req, res) => {
     const { employeeId } = req.params;
     const updateData = { ...req.body };
 
-    // Upload new image to Cloudinary if file is provided
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "evocodes_uploads/employees",
       });
       updateData.employeeImage = result.secure_url;
+    } else {
+      delete updateData.employeeImage;
     }
 
     const updatedEmployee = await employees.findOneAndUpdate(

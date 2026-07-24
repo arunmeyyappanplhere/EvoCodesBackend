@@ -26,8 +26,9 @@ const contactRequestModel = new mongoose.Schema({
         required : true
     },
     contactRequestStatus : {
-        type : Array,
-        required : true
+        type : String,
+        enum : ["NEW", "REPLIED", "ARCHIVED"],
+        default : "NEW"
     }
 },
     {

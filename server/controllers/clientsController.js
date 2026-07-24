@@ -1,5 +1,12 @@
 const clients = require("../models/clients");
 
+const slugify = (name = "") =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "client";
+
 // GET all clients
 const getClients = async (req, res) => {
   try {
@@ -18,7 +25,6 @@ const getClients = async (req, res) => {
 const addClient = async (req, res) => {
   try {
     const {
-      clientID,
       companyName,
       companyDomain,
       primaryContactName,
@@ -28,6 +34,11 @@ const addClient = async (req, res) => {
       clientStatus,
     } = req.body;
 
+    const clientID =
+      req.body.clientID && req.body.clientID.trim()
+        ? req.body.clientID.trim()
+        : `${slugify(companyName)}-${Date.now().toString(36)}`;
+
     const newClient = new clients({
       clientID,
       companyName,
@@ -35,13 +46,14 @@ const addClient = async (req, res) => {
       primaryContactName,
       primaryContactEmail,
       industry,
-      activeProjects,
+      activeProjects: Number(activeProjects) || 0,
       clientStatus,
     });
 
     await newClient.save();
     res.status(201).json(newClient);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -50,9 +62,14 @@ const addClient = async (req, res) => {
 const updateClient = async (req, res) => {
   try {
     const { clientID } = req.params;
+    const updateData = { ...req.body };
+    if (updateData.activeProjects !== undefined) {
+      updateData.activeProjects = Number(updateData.activeProjects) || 0;
+    }
+
     const updatedClient = await clients.findOneAndUpdate(
       { clientID },
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -62,6 +79,7 @@ const updateClient = async (req, res) => {
       res.status(200).json(updatedClient);
     }
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

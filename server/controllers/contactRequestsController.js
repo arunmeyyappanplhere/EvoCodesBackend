@@ -1,108 +1,81 @@
-const contactrequests = require("../models/contactrequests");
+const contactRequests = require("../models/contactrequests");
 
-const contactRequestController = async(req,res) =>{
-    try{
-       const contactRequestAvailable = await contactrequests.find();
-       if (contactRequestAvailable.length == 0){
-        res.status(400).json({ message : "No contactRequest Found !!"});
-       }
-       else{
-        res.status(200).json(contactRequestAvailable);
-       }
-    } catch {
-        res.status(500).json({ error : "Internal Server Error"});
-    }
-};
+const slugify = (name = "") =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "request";
 
+// POST - add a new contact request (typically submitted by the public contact form)
 const addContactRequest = async (req, res) => {
   try {
     const {
-      contactRequestId,
       contactRequestSenderName,
       contactRequestEmail,
       contactRequestSubject,
       contactRequestDesc,
-      contactRequestDate,
-      contactRequestStatus,
     } = req.body;
 
-    if (
-      !contactRequestId ||
-      !contactRequestSenderName ||
-      !contactRequestEmail ||
-      !contactRequestSubject ||
-      !contactRequestDesc ||
-      !contactRequestDate
-    ) {
-      return res.status(400).json({ error: "All required fields must be provided" });
-    }
+    const contactRequestId =
+      req.body.contactRequestId && req.body.contactRequestId.trim()
+        ? req.body.contactRequestId.trim()
+        : `${slugify(contactRequestSenderName)}-${Date.now().toString(36)}`;
 
-    const newContactRequest = await contactrequests.create({
+    const newRequest = new contactRequests({
       contactRequestId,
       contactRequestSenderName,
       contactRequestEmail,
       contactRequestSubject,
       contactRequestDesc,
-      contactRequestDate,
-      contactRequestStatus: contactRequestStatus || ["Pending"],
+      contactRequestDate: req.body.contactRequestDate || new Date().toISOString(),
+      contactRequestStatus: req.body.contactRequestStatus || "NEW",
     });
 
-    return res.status(201).json({ 
-      message: "Contact request created successfully",
-      data: newContactRequest,
-    });
+    await newRequest.save();
+    res.status(201).json(newRequest);
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Internal Server Error" });
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// PUT - update a contact request (used for marking as Read/Replied/Archived, or full edits)
 const updateContactRequest = async (req, res) => {
   try {
     const { contactRequestId } = req.params;
 
-    const updatedRequest = await contactrequests.findOneAndUpdate(
-      { contactRequestId: contactRequestId }, // or simply { contactRequestId }
+    const updatedRequest = await contactRequests.findOneAndUpdate(
+      { contactRequestId },
       req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
+      { new: true, runValidators: true }
     );
 
     if (!updatedRequest) {
-      return res.status(404).json({
-        error: "Contact request not found",
-      });
+      res.status(404).json({ message: "Contact Request Not Found !!" });
+    } else {
+      res.status(200).json(updatedRequest);
     }
-
-    return res.status(200).json({
-      message: "Contact request updated successfully",
-      data: updatedRequest,
-    });
   } catch (error) {
-    return res.status(500).json({
-      error: error.message,
-    });
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// DELETE - remove a contact request
 const deleteContactRequest = async (req, res) => {
   try {
     const { contactRequestId } = req.params;
-
-    const deletedRequest = await contactrequests.findOneAndDelete({
-      contactRequestId
-    });
+    const deletedRequest = await contactRequests.findOneAndDelete({ contactRequestId });
 
     if (!deletedRequest) {
-      return res.status(404).json({ error: "Contact request not found" });
+      res.status(404).json({ message: "Contact Request Not Found !!" });
+    } else {
+      res.status(200).json({ message: "Contact Request Deleted Successfully", deletedRequest });
     }
-
-    return res.status(200).json({
-      message: "Contact request deleted successfully",
-      data: deletedRequest,
-    });
   } catch (error) {
-    return res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-module.exports = {contactRequestController,addContactRequest,updateContactRequest,deleteContactRequest};
+module.exports = { addContactRequest, updateContactRequest, deleteContactRequest };

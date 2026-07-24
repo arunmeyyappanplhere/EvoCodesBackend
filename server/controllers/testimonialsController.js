@@ -109,7 +109,7 @@ const getTestimonialStats = async (req, res) => {
     let averageRating = 0;
     if (ratings.length > 0) {
       const totalRating = ratings.reduce(
-        (sum, item) => sum + item.testimonialRating,
+        (sum, item) => sum + Number(item.testimonialRating || 0),
         0
       );
       averageRating = Number((totalRating / ratings.length).toFixed(1));
